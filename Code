@@ -151,17 +151,17 @@ actionLoop (t,l) =
     let numeros = [num | (num,_,_,_) <- l] in
     do
 		putStr "Tabuleiro"
-        print t
+                print t
 		io1 <- jog l
 		io2 <- opcoes io1
 		if opcoes == 5 then return () 
 					   else if jogo_acabou == True then let putStr "Jogo finalizado" in return ()
 					                               else let (new_t,new_l) = case opcoes of 
-																		1 -> move_jogador t io1 N
-												                        2 -> move_jogador t io1 S
-																		3 -> move_jogador t io1 L
-																		_ -> move_jogador t io1 O
-														in actionLoop (new_t,new_l)
+												1 -> move_jogador t io1 N
+												2 -> move_jogador t io1 S
+												3 -> move_jogador t io1 L
+												_ -> move_jogador t io1 O
+									    in actionLoop (new_t,new_l)
 												   
 
 
