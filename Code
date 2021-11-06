@@ -1,89 +1,170 @@
-
 -- Alunos:
--- Arthur Resende Santos 
--- Henrique Braga Alves Pereira
---Trabalho no momento esta incompleto, pois tivemos dificuldades principalmente na modificacao do tabuleiro
---e no casamento das funcoes.
-
--- Link da explicação: https://web.microsoftstream.com/video/3ea5305a-c48a-4151-9fb0-93dd53ac4001
+-- Arthur Resende Santos 12011BCC020
+-- Henrique Braga Alves Pereira 12011BCC017
+-- Fizemos algumas alteracoes nas funcoes da primeira etapa pois percebemos que desta forma conseguiriamos implementar melhor as novas funcoes
+-- Conseguimos criar muitas outras funcoes importantes e realizar o IO mas o programa nao esta completo
+-- Tivemos dificuldade em conciliar todas as funcoes em um unico funcionamento e tambem com o funcionamento das bombas
 
 type id = Int
 type localizacao = (Int, Int)
-type dir = N | S | L | O
-data bloco = grama | parede | pedra | bomba
-data item = presente_patins | presente_arremesso
+data dir = N | S | L | O deriving (Eq, Show)
+data bloco_item = grama | parede | pedra | bomba | presente_patins | presente_arremesso deriving (Eq, Show)
 type capacidades = ((presente_patins,Int), (bomba,Int), (presente_arremesso,Int))
 type jogador = (id,localizacao,dir,capacidades)
 type celula = [[a],[b],[c],[d]]
 --type celula = ([grama||presente||parede||pedra||bomba||jogador],[grama||presente||parede||pedra||bomba||jogador],[grama||presente||parede||pedra||bomba||jogador],[grama||presente||parede||pedra||bomba||jogador])
-type linha = [celula,celula,celula,celula,celula,celula,celula,celula]
-type tabuleiro = [linha,linha,linha,linha,linha,linha,linha,linha]
-
-
--- esta funcao verifica se a celula criada eh valida, ou seja, nao possui uma combinacao de itens invalida
-celula_valida :: celula -> Bool
-celula_valida [[a],[b],[c],[d]]
- | x == [[],[],[],[]] = True
- | a /= (grama || pedra || parede) = False
- | b == (presente_patins || presente_arremesso || bomba) && (a /= grama) = False
- | b || c || d == pedra = False
- | (b || c || d == parede) && a /= grama = False
- | (b || c || d == jogador) && a /= grama = False
- | otherwise = True
- 
---verifica se a linha possui todas as celulas validas
-linha_valida :: linha -> Bool
-linha_valida [celula1,celula2,celula3,celula4,celula5,celula6,celula7,celula8] = celula_valida celula1 == True && celula_valida celula2 == True && celula_valida celula3 == True && celula_valida celula4 == True && celula_valida celula5 == True && celula_valida celula6 == True && celula_valida celula7 == True && celula_valida celula8 == True
-
---ao receber as celulas do tabuleiro como parametro, verifica se todas sao validas
-cria_tabuleiro :: [a] -> tabuleiro
-cria_tabuleiro x@[linha1,linha2,linha3,linha4,linha5,linha6,linha7,linha8] = if (linha_valida linha1 == True && celula_valida linha2 == True && linha_valida linha3 == True && linha_valida linha4 == True && linha_valida linha5 == True && linha_valida linha6 == True && linha_valida linha7 == True && linha_valida linha8 == True) then x
-	
-
---verifica se na celula ha algum jogador
-existe_jogador :: celula -> Bool
-existe_jogador [] = False
-existe_jogador (x:xs) 
-  | x == jogador = True
-  | otherwise = existe_jogador xs
-
--- em implementacao
--- A função recebe como parametro o tabuleiro e os jogadores inseridos no tabuleiro e retorna um novo tabuleiro modificado.
--- A chamada da função verifica se o poder de arremesso esta disponivel para o jogador, de modo que se estiver ele ira utilizar
--- e de acordo com o numero de arremessos disponiveis ele ira lançar a bomba esse mesmo numero de casas.
-arremesso :: tabuleiro -> jogador -> tabuleiro
-arremesso x (a,b,c,(,,(y,w)))
-        | w == 0 = x
-        | otherwise = novotabuleiro
-        where novotabuleiro =
-
---alternativa para a funcao existe_jogador
-existe_jogador :: celula -> Bool
-existe_jogador [[a],[b],[c],[d]] = a == (_,_,_,_) || b == (_,_,_,_) || c == (_,_,_,_) || d == (_,_,_,_)
-
---recebe o jogador de uma determinada celula
-pega_jogador :: celula -> jogador
-pega_jogador [[a],[b],[c],[d]]
- | existe_jogador a == True = a
- | existe_jogador b == True = b
- | existe_jogador c == True = c
- | otherwise = d
-
---em implementacao
---verifica o tabuleiro em busca dos jogadores a fim de montar uma lista com eles
-lista_jogadores :: tabuleiro -> [Jogador]
-lista_jogadores [] = []
-lista_jogadores (x:xs) l
- | existe_jogador (head x) = head x:l
- | existe_jogador (head xs) = head xs:l
- | otherwise = lista_jogadores xs
-
---esta funcao recebe um tabuleiro e retorna outro com a modificacao do movimento do personagem ja efetuada, mas antes verifica se a celula esta disponivel para ser ocupada
-movimenta :: tabuleiro -> jogador -> localizacao -> tabuleiro
-movimenta t j (x,y) = if celula_disponivel (x,y) == True then modifica t j (x,y)
-                                                         else error "este movimento nao eh possivel"
+type linha = [celula]
+type tabuleiro = [linha]
 
 
 --caso a lista dos jogadores so possua um elemento, este jogador eh o vencedor e o jogo acabou
-jogo_acabou :: tabuleiro -> String -> Bool
-jogo_acabou x l = if l null then tail(lista_jogadores x) == [] else error "insira uma lista vazia"
+jogo_acabou :: [jogador] -> Bool
+jogo_acabou l = if tail l == []
+
+-- A função lista_jogadores tem como objetivo verificar o tabuleiro em busca dos jogadores com o objetivo de montar uma lista com eles.
+lista_jogadores :: tabuleiro -> Int -> [jogador]
+lista_jogadores [] _ = []
+lista_jogadores (x:xs) l = cria_jogadores x l 0 ++ lista_jogadores xs (l+1)
+ 
+-- A função tem como objetivo verificar se o jogador selecionado existe no tabuleiro.  
+existe_jogador :: celula -> Bool
+existe_jogador [] = False
+existe_jogador (x:xs) 
+  | head x == jogador = True
+  | otherwise = existe_jogador xs 
+ 
+-- A função tem como objetivo criar os jogadores no tabuleiro. 
+cria_jogadores :: linha -> Int -> Int -> [jogador]
+cria_jogadores [] _ _ = [] 
+cria_jogadores (x:xs) l j
+            | null x == True = cria_jogadores xs l (j+1)
+            | existe_jogador (head x) == False = cria_jogadores xs l (j+1)
+            | otherwise = ((head x), (l,j), N,((presente_patins),(presente_arremesso))) : cria_jogadores xs l (j+1)
+            
+-- A função tem como objetivo escolher um jogador no tabuleiro.
+pega_jogador :: Int -> [jogador] -> jogador
+pega_jogador _ [] = error "jogador invalido"
+pega_jogador numjogador (x@(a,_,_,_):xs)
+  | a == numjogador = x
+  | otherwise = pegajogador numjogador xs 
+  
+
+
+
+verifica_bloco :: tabuleiro -> Int -> Int -> celula
+verifica_bloco x y z = if y == 0 && z == 0 then head(head x)
+                            else if y == 0 && z > 0 then last(take(z+1)head x)
+                                else if y > 0 && z == 0 then head (last(take(y+1) x))
+                                    else last (take (z+1) (last (take (y+1) x)))
+                            
+movimento_possivel :: tabuleiro -> Int -> Int -> Bool
+movimento_possivel x y z = if head (verifica_bloco x y z) == parede then False
+                                else if head (verifica_bloco x y z) == pedra then False 
+                                    else if head (verifica_bloco x y z) == bomba then False 
+                                        else True
+
+altera :: jogador -> localizacao -> jogador
+altera (a,(x1,y1),b,c) (x2,y2) = (a,(x2,y2),b,c)
+
+
+move_jogador :: tabuleiro -> jogador -> dir -> jogador
+
+move_jogador t (id, (x, y), (dir N), capac) (dir N) = if movimento_possivel t (x-1) y then altera (id, (x, y), (dir N), capac) (x-1,y)
+																					  else (id, (x, y), (dir N), capac) -- sem alteracoes, pois movimento impossivel
+
+move_jogador t (id, (x, y), (dir S), capac) (dir S) = if movimento_possivel t (x+1) y then altera (id, (x, y), (dir S), capac) (x+1,y)
+																					  else (id, (x, y), (dir S), capac) -- sem alteracoes, pois movimento impossivel
+
+move_jogador t (id, (x, y), (dir L), capac) (dir L) = if movimento_possivel t x (y+1) then altera (id, (x, y), (dir L), capac) (x,y+1)
+																					  else (id, (x, y), (dir L), capac) -- sem alteracoes, pois movimento impossivel
+
+move_jogador t (id, (x, y), (dir O), capac) (dir O) = if movimento_possivel t x (y-1) then altera (id, (x, y), (dir O), capac) (x,y-1)
+																					  else (id, (x, y), (dir O), capac) -- sem alteracoes, pois movimento impossivel
+
+move_jogador t _ _ = t -- parametros invalidos (sem alteracoes)
+
+--criacao de celulas de modo a obdecer os requisitos
+criacao_celula :: Int -> celula
+criacao_celula i
+	| i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || ii == 7 || i == 8 || i == 16 || i == 24 || i == 32 || i == 40 || i == 48 || i == 56 || i == 57 || i == 58 || i == 59 || i == 60 || i == 61 || i == 62 || i == 63 || i == 64 = [[pedra],[],[],[]]
+	| i == 9 || i == 15 || i == 23 || i == 35 = [[grama],[presente_patins],[parede],[]]
+	| i == 40 || i == 44 || i == 49 || i == 55 = [[grama],[presente_patins],[],[]]
+	| i == 10 || i == 27 = [[grama],[presente_arremesso],[parede],[]]
+	| i == 43 || i == 53 = [[grama],[presente_arremesso],[bomba],[]]
+	| i == 11 || i == 17 || i == 2 || i == 51 || i == 38 = [[grama],[bomba],[parede],[]]
+	| i == 20 = [[grama],[parede],[],[]]
+	| i == 37 = [[grama],[presente_patins],[bomba],[]]
+	| i == 45 = [[grama],[bomba],[],[]]
+	| otherwise = [[grama],[],[],[]]
+
+criacao_linha :: Int -> linha
+criacao_linha 64 = []
+criacao_linha i =  criacao_celula i ++ criacao_linha (i+1)
+	
+criacao_tabuleiro :: Int -> tabuleiro
+criacao_tabuleiro 8 = []
+criacao_tabuleiro i = criacao_linha i ++ criacao_tabuleiro (i+1)
+
+
+acha_jogador :: Int -> jogador
+acha_jogador (x:xs) i
+	| fst x = i = x
+	| otherwise = acha_jogador xs i
+
+
+
+jog :: IO Int
+jog l = do
+    putStrLn "Digite '1' para escolher o primeiro jogador, '2' para o segundo, '3' para o terceiro e '4' para o quarto."
+    jog <- getChar
+    return (case opcao of "1" -> acha_jogador l 1
+                          "2" -> acha_jogador l 2
+                          "3" -> acha_jogador l 3
+                          "4" -> acha_jogador l 4
+                            _ -> error "opcao invalida")
+
+
+
+
+
+opcoes :: IO Int
+opcoes = do
+    putStrLn "Digite '1' para mover para o norte, '2' para o sul, '3' para leste e '4' para o oeste. Para finalizar, digite '5'"
+    opcao <- getLine
+    return (case opcao of "1" -> 1 move_jogador t io1 N
+                          "2" -> 2 move_jogador t io1 S
+                          "3" -> 3 move_jogador t io1 L
+                          "4" -> 4 move_jogador t io1 O
+                          "5" -> 5 Sair
+                            _ -> error "opcao invalida")
+
+
+main :: IO ()
+main = do
+  actionLoop (c_tab, c_jog)
+  where c_tab = criacao_tabuleiro
+	    c_jog = cria_jogadores
+  
+
+actionLoop :: (tabuleiro,[jogador] -> IO ()
+actionLoop (t,l) =
+    let numeros = [num | (num,_,_,_) <- l] in
+    do
+		putStr "Tabuleiro"
+        print t
+		io1 <- jog l
+		io2 <- opcoes io1
+		if opcoes == 5 then return () 
+					   else if jogo_acabou == True then let putStr "Jogo finalizado" in return ()
+					                               else let (new_t,new_l) = case opcoes of 
+																		1 -> move_jogador t io1 N
+												                        2 -> move_jogador t io1 S
+																		3 -> move_jogador t io1 L
+																		_ -> move_jogador t io1 O
+														in actionLoop (new_t,new_l)
+												   
+
+
+
+
+
